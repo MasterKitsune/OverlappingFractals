@@ -8,8 +8,8 @@ GOLDEN_RATIO = (1 + np.sqrt(5)) / 2
 TOLERANCE = 1e-2
 
 # Parameters
-ITERATION_DEPTH = 6
-CONTRACTION_VALUE = 1 / GOLDEN_RATIO
+ITERATION_DEPTH = 4   # Currently can't go past 10 before decreasing height of tiles
+CONTRACTION_VALUE = 1/GOLDEN_RATIO  # Must be between 1/2 and 1
 
 # Functions and Inverses of IFS
 def f_1(x):
@@ -93,23 +93,29 @@ def calculate_top_tile(depth, functions, inv_functions, num_functions):
     return tiles
 
 # Functions for drawing IFS
-def draw_top_tiles(top_tiles, height):
+def draw_top_tiles(top_tiles, height, iteration_depth):
     """Draw rectangles for the calculated top tiles."""
     for tile in top_tiles:
         color = tile[2]
-        rect = patches.Rectangle((tile[0], height), tile[1] - tile[0], 0.1, linewidth=1,
+        rect = patches.Rectangle((tile[0], 1 - height), tile[1] - tile[0], -0.1, linewidth=1,
                                  edgecolor=color, facecolor=color, alpha=0.7)
         AX.add_patch(rect)
+
+    # Add iteration depth label
+    plt.text(-0.02, 1 - height - 0.05, f'Iteration {iteration_depth}', fontsize=8, ha='right', va='center')
 
 def draw():
     """Draw the final plot."""
     AX.set_yticks([])
-    AX.set_xlabel('Unit Interval')
-    plt.title('Overlapping Cantor IFS for contraction factor of golden ratio')
+    #AX.set_xlabel('Unit Interval')
+    #plt.title('Overlapping Cantor IFS for contraction factor of golden ratio')
+    plt.savefig('output_image.png', bbox_inches='tight')
     plt.show()
+
 
 if __name__ == "__main__":
     for i in range(ITERATION_DEPTH):
         top_tiles = calculate_top_tile(i, FUNCTIONS, INV_FUNCTIONS, len(FUNCTIONS))
-        draw_top_tiles(top_tiles, i / ITERATION_DEPTH)
+        draw_top_tiles(top_tiles, i / ITERATION_DEPTH, i)
     draw()
+    print('Number of equivalence Classes:', len(TILE_COLOR_DICT))
