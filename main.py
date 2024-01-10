@@ -2,14 +2,24 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 import itertools
+from scipy.optimize import fsolve
+
+# Equations for the supergolden ratio and plastic number
+def supergolden_equation(x):
+    return x**3 - x - 1
+
+def plastic_equation(x):
+    return x**3 - x - 1
 
 # Constants
 GOLDEN_RATIO = (1 + np.sqrt(5)) / 2
+SUPERGOLDEN_RATIO = fsolve(supergolden_equation, 1.0)[0]
+PLASTIC_NUMBER = fsolve(plastic_equation, 1.0)[0]
 TOLERANCE = 1e-2
 
 # Parameters
-ITERATION_DEPTH = 4   # Currently can't go past 10 before decreasing height of tiles
-CONTRACTION_VALUE = 1/GOLDEN_RATIO  # Must be between 1/2 and 1
+ITERATION_DEPTH = 7   # Currently can't go past 10 before decreasing height of tiles
+CONTRACTION_VALUE = 1/PLASTIC_NUMBER  # Must be between 1/2 and 1
 
 # Functions and Inverses of IFS
 def f_1(x):
