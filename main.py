@@ -18,8 +18,9 @@ PLASTIC_NUMBER = fsolve(plastic_equation, 1.0)[0]
 TOLERANCE = 1e-2
 
 # Parameters
-ITERATION_DEPTH = 7   # Currently can't go past 10 before decreasing height of tiles
-CONTRACTION_VALUE = 1/GOLDEN_RATIO  # Must be between 1/2 and 1
+ITERATION_DEPTH = 8   # Currently can't go past 10 before decreasing height of tiles
+CONTRACTION_VALUE = 1/2**0.5
+# Must be between 1/2 and 1
 
 # Functions and Inverses of IFS
 def f_1(x):
