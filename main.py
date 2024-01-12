@@ -19,7 +19,7 @@ TOLERANCE = 1e-2
 
 # Parameters
 ITERATION_DEPTH = 7   # Currently can't go past 10 before decreasing height of tiles
-CONTRACTION_VALUE = 1/PLASTIC_NUMBER  # Must be between 1/2 and 1
+CONTRACTION_VALUE = 1/GOLDEN_RATIO  # Must be between 1/2 and 1
 
 # Functions and Inverses of IFS
 def f_1(x):
@@ -104,22 +104,36 @@ def calculate_top_tile(depth, functions, inv_functions, num_functions):
 
 # Functions for drawing IFS
 def draw_top_tiles(top_tiles, height, iteration_depth):
-    """Draw rectangles for the calculated top tiles."""
+    """Draw rectangles for the calculated top tiles with addresses."""
     for tile in top_tiles:
         color = tile[2]
+
+        # Check if the tile is banned with a tolerance
+        if np.isclose(tile[0], tile[1], atol=TOLERANCE) or tile[0] >= tile[1]:
+            continue
+
         rect = patches.Rectangle((tile[0], 1 - height), tile[1] - tile[0], -0.1, linewidth=1,
                                  edgecolor=color, facecolor=color, alpha=0.7)
         AX.add_patch(rect)
 
+        # Add address text inside the rectangle with size decreasing with iteration depth
+        if iteration_depth <= 4:
+            address_str = ''.join(map(str, lexicographic_list(iteration_depth, len(FUNCTIONS))[top_tiles.index(tile)]))
+            text_size = 15 - 2.5 * iteration_depth  # Adjust this value as needed
+
+            plt.text((tile[0] + tile[1]) / 2, 1 - height - 0.05, address_str, fontsize=text_size,
+                     ha='center', va='center', color='white' if np.mean(color) < 0.5 else 'black')
+
     # Add iteration depth label
-    plt.text(-0.02, 1 - height - 0.05, f'Iteration {iteration_depth}', fontsize=8, ha='right', va='center')
+    plt.text(-0.02, 1 - height - 0.05, f'Iteration {iteration_depth}', fontsize=10, ha='right', va='center')
+
 
 def draw():
     """Draw the final plot."""
     AX.set_yticks([])
     #AX.set_xlabel('Unit Interval')
     #plt.title('Overlapping Cantor IFS for contraction factor of golden ratio')
-    plt.savefig('output_image.png', bbox_inches='tight')
+    plt.savefig('Cantor-golden.png', bbox_inches='tight')
     plt.show()
 
 
