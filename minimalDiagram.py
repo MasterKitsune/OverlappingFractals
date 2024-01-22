@@ -20,6 +20,7 @@ TOLERANCE = 1e-2
 # Parameters
 ITERATION_DEPTH = 8   # Currently can't go past 10 before decreasing height of tiles
 CONTRACTION_VALUE = 1/3**0.5
+
 # Must be between 1/2 and 1
 
 # Functions and Inverses of IFS
@@ -80,7 +81,7 @@ def calculate_top_tile(depth, functions, inv_functions, num_functions):
         R_top = apply_ifs_functions(address, 1, functions, depth)
 
         # Check if the tile is entirely covered by any previous tile
-        if any(L <= L_top and R >= R_top for L, R, _ in tiles):
+        if any(L <= L_top and R >= R_top for L, R, _, _, _ in tiles):
             continue
 
         # Get the key for the dictionary based on the inverse function
@@ -89,17 +90,19 @@ def calculate_top_tile(depth, functions, inv_functions, num_functions):
         # Check if the tile is equivalent to any previous tile with a tolerance
         equivalent_tile = None
         for key, value in TILE_COLOR_DICT.items():
-            if np.allclose(characterization, key, atol=TOLERANCE):  # Adjust tolerance as needed
+            if np.allclose(characterization, key[0], atol=TOLERANCE):  # Adjust tolerance as needed
                 equivalent_tile = value
                 break
 
         if equivalent_tile is not None:
-            color = equivalent_tile
+            color, _ = equivalent_tile
+            is_new = False
         else:
             color = generate_random_color()
-            TILE_COLOR_DICT[characterization] = color
+            is_new = True
+            TILE_COLOR_DICT[(characterization, is_new)] = (color, is_new, address)  # Add address as a key
 
-        tiles.append((L_top, R_top, color))
+        tiles.append((L_top, R_top, color, is_new, address))
 
     return tiles
 
@@ -107,23 +110,21 @@ def calculate_top_tile(depth, functions, inv_functions, num_functions):
 def draw_top_tiles(top_tiles, height, iteration_depth):
     """Draw rectangles for the calculated top tiles with addresses."""
     for tile in top_tiles:
-        color = tile[2]
+        color, is_new, address = tile[2], tile[3], tile[4]
 
-        # Check if the tile is banned with a tolerance
-        if np.isclose(tile[0], tile[1], atol=TOLERANCE) or tile[0] >= tile[1]:
-            continue
+        # Check if the tile is new and not banned with a tolerance
+        if is_new and not (np.isclose(tile[0], tile[1], atol=TOLERANCE) or tile[0] >= tile[1]):
+            rect = patches.Rectangle((tile[0], 1 - height), tile[1] - tile[0], -0.1, linewidth=1,
+                                     edgecolor=color, facecolor=color, alpha=0.7)
+            AX.add_patch(rect)
 
-        rect = patches.Rectangle((tile[0], 1 - height), tile[1] - tile[0], -0.1, linewidth=1,
-                                 edgecolor='black', facecolor=color, alpha=0.7)
-        AX.add_patch(rect)
+            # Add address text inside the rectangle with size decreasing with iteration depth
+            if iteration_depth <= 4:
+                address_str = ''.join(map(str, address))
+                text_size = 15 - 2.5 * iteration_depth  # Adjust this value as needed
 
-        # Add address text inside the rectangle with size decreasing with iteration depth
-        if iteration_depth <= 4:
-            address_str = ''.join(map(str, lexicographic_list(iteration_depth, len(FUNCTIONS))[top_tiles.index(tile)]))
-            text_size = 15 - 2.5 * iteration_depth  # Adjust this value as needed
-
-            plt.text((tile[0] + tile[1]) / 2, 1 - height - 0.05, address_str, fontsize=text_size,
-                     ha='center', va='center', color='white' if np.mean(color) < 0.5 else 'black')
+                plt.text((tile[0] + tile[1]) / 2, 1 - height - 0.05, f'{address_str} (New)', fontsize=text_size,
+                         ha='center', va='center', color='white' if np.mean(color) < 0.5 else 'black')
 
     # Add iteration depth label
     plt.text(-0.02, 1 - height - 0.05, f'Iteration {iteration_depth}', fontsize=10, ha='right', va='center')
@@ -136,6 +137,7 @@ def draw():
     #plt.title('Overlapping Cantor IFS for contraction factor of golden ratio')
     plt.savefig('Cantor-golden.png', bbox_inches='tight')
     plt.show()
+
 
 if __name__ == "__main__":
     for i in range(ITERATION_DEPTH):
